@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Color Finder Puzzle</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #222; font-family: sans-serif; color: white; }
+        
+        /* 広告エリア：上下とも110px（中サイズ用） */
+        #ad-top { position: fixed; top: 0; left: 0; width: 100%; height: 110px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        #ad-bottom { position: fixed; bottom: 0; left: 0; width: 100%; height: 110px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        
+        /* ゲームエリア：上下110pxずつ引いた中央部分 */
+        #game-area { 
+            margin-top: 110px; 
+            height: calc(100vh - 220px); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px; box-sizing: border-box;
+        }
+
+        #ui { margin-bottom: 10px; font-size: 20px; font-weight: bold; }
+        
+        /* タイルが並ぶパネル */
+        #grid { 
+            display: grid; 
+            gap: 5px; 
+            width: 100%; 
+            max-width: 350px; 
+            aspect-ratio: 1/1; 
+        }
+        .tile { border-radius: 8px; cursor: pointer; transition: transform 0.1s; }
+        .tile:active { transform: scale(0.95); }
+
+        #startScreen {
+            position: absolute; top: 110px; left: 0; width: 100%; height: calc(100vh - 220px);
+            background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50;
+        }
+        #goButton { padding: 15px 40px; font-size: 24px; background: #4caf50; border: none; border-radius: 50px; color: white; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="ad-top"><div id="ad-box-1">★</div></div>
+    <div id="ad-bottom"><div id="ad-box-2">★</div></div>
+
+    <div id="game-area">
+        <div id="ui">LEVEL: <span id="lv">1</span> | BEST: <span id="best">1</span></div>
+        <div id="grid"></div>
+        
+        <div id="startScreen">
+            <h1 style="color:#4caf50;">COLOR FINDER</h1>
+            <p>1つだけ違う色のタイルをタップ！</p>
+            <button id="goButton">START</button>
+            <p style="margin-top:10px;">BEST SCORE: LV <span id="best2">1</span></p>
+        </div>
+    </div>
+
+    <script>
+        const grid = document.getElementById("grid");
+        const lvDisp = document.getElementById("lv");
+        const bestDisp = document.getElementById("best");
+        const bestDisp2 = document.getElementById("best2");
+        const startScreen = document.getElementById("startScreen");
+
+        let level = 1;
+        let bestLevel = localStorage.getItem("color_finder_best") || 1;
+        bestDisp.innerText = bestLevel;
+        bestDisp2.innerText = bestLevel;
+
+        document.getElementById("goButton").onclick = () => {
+            startScreen.style.display = "none";
+            level = 1;
+            initLevel();
+        };
+
+        function initLevel() {
+            lvDisp.innerText = level;
+            grid.innerHTML = "";
+            
+            // レベルに応じてマスの数を増やす (2x2 から最大 6x6)
+            const side = Math.min(6, 2 + Math.floor(level / 5));
+            grid.style.gridTemplateColumns = `repeat(${side}, 1fr)`;
+            
+            // 基本の色をランダムに作成
+            const h = Math.floor(Math.random() * 360);
+            const s = 50 + Math.floor(Math.random() * 30);
+            const l = 40 + Math.floor(Math.random() * 20);
+            
+            // 正解タイトルの色の差（レベルが上がるほど小さくなる）
+            const diff = Math.max(2, 20 - Math.floor(level / 2));
+            const targetIdx = Math.floor(Math.random() * (side * side));
+
+            for(let i = 0; i < side * side; i++) {
+                const tile = document.createElement("div");
+                tile.className = "tile";
+                if(i === targetIdx) {
+                    tile.style.backgroundColor = `hsl(${h}, ${s}%, ${l + diff}%)`;
+                    tile.onclick = () => {
+                        level++;
+                        if(level > bestLevel) {
+                            bestLevel = level;
+                            localStorage.setItem("color_finder_best", bestLevel);
+                            bestDisp.innerText = bestLevel;
+                        }
+                        initLevel();
+                    };
+                } else {
+                    tile.style.backgroundColor = `hsl(${h}, ${s}%, ${l}%)`;
+                    tile.onclick = () => {
+                        alert("GAME OVER! LV " + level);
+                        location.reload();
+                    };
+                }
+                grid.appendChild(tile);
+            }
+        }
+
+        // 20.1秒リフレッシュ
+        setInterval(() => {
+            ["ad-box-1", "ad-box-2"].forEach(id => {
+                const box = document.getElementById(id);
+                if (box && box.innerHTML.trim() !== "★") {
+                    const tag = box.innerHTML;
+                    box.innerHTML = "";
+                    setTimeout(() => { box.innerHTML = tag; }, 100);
+                }
+            });
+        }, 20100);
+    </script>
+</body>
+</html>
