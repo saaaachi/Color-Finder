@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Color Finder Puzzle</title>
+    <title>Animal Sort Flick v2</title>
     <style>
         body { 
             margin: 0; height: 100vh; display: flex; flex-direction: column; 
-            background: #222; font-family: sans-serif; color: white; overflow: hidden; touch-action: none; 
+            background: #f0f0f0; font-family: sans-serif; overflow: hidden; touch-action: none; 
         }
         
         /* 上下の広告エリア：150px（中サイズ対応） */
@@ -19,34 +19,36 @@
 
         /* ゲームエリア */
         #game-area { 
-            flex-grow: 1; position: relative; width: 100%; background: #222; overflow: hidden;
+            flex-grow: 1; position: relative; width: 100%; background: #f0f0f0; overflow: hidden;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
+
+        #score-ui { position: absolute; top: 10px; font-size: 20px; font-weight: bold; color: #333; z-index: 10; }
         
-        #ui { margin-bottom: 10px; font-size: 20px; font-weight: bold; text-shadow: 2px 2px 4px #000; }
-        
-        /* タイルが並ぶパネル */
-        #grid { 
-            display: grid; 
-            gap: 6px; 
-            width: 90vw; 
-            max-width: 340px; 
-            aspect-ratio: 1/1; 
+        /* 中央のターゲット */
+        #target-card {
+            width: 140px; height: 140px; background: white; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 75px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            user-select: none; z-index: 20;
+            pointer-events: none; /* タッチ判定は親要素で行う */
         }
-        .tile { border-radius: 8px; cursor: pointer; transition: transform 0.05s; -webkit-tap-highlight-color: transparent; }
-        .tile:active { transform: scale(0.92); }
+
+        .guide { position: absolute; top: 50%; transform: translateY(-50%); font-size: 32px; font-weight: bold; opacity: 0.2; pointer-events: none; }
+        #left-guide { left: 10px; color: #ff6b6b; text-align: center; }
+        #right-guide { right: 10px; color: #4ecdc4; text-align: center; }
 
         /* メニュー画面：鉄壁レイアウト */
         #menuScreen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.95); display: flex; flex-direction: column; 
+            background: rgba(255,255,255,0.96); display: flex; flex-direction: column; 
             align-items: center; justify-content: space-between; z-index: 200; padding: 10px 0; box-sizing: border-box;
         }
 
         #ad-middle-container { 
-            width: 300px; height: 250px; background: #444;
+            width: 300px; height: 250px; background: #ddd;
             display: none; justify-content: center; align-items: center; 
-            overflow: hidden; flex-shrink: 0; border: 1px solid #555;
+            overflow: hidden; flex-shrink: 0; border: 1px solid #ccc;
         }
         
         .btn-group { 
@@ -54,23 +56,26 @@
             width: 100%; padding-bottom: 5px;
         }
         .menu-btn { padding: 12px 30px; font-size: 17px; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; width: 220px; text-align: center; }
-        #goButton { background: #4caf50; box-shadow: 0 4px #2e7d32; }
+        #goButton { background: #333; box-shadow: 0 4px #000; }
         .link-btn { background: #ff4081; box-shadow: 0 4px #c2185b; }
-        .best-info { color: #4caf50; font-size: 18px; font-weight: bold; margin: 2px 0; }
+        .best-info { color: #555; font-size: 18px; font-weight: bold; margin: 2px 0; }
     </style>
 </head>
 <body>
     <div id="ad-top"><iframe src="ad.html" id="frame-top"></iframe></div>
 
-    <div id="game-area">
-        <div id="ui">LEVEL: <span id="lv">1</span></div>
-        <div id="grid"></div>
+    <div id="game-area" id="touch-zone">
+        <div id="score-ui">TIME: 10.0 | SCORE: 0</div>
         
+        <div id="left-guide" class="guide">🐶<br>左</div>
+        <div id="target-card">？</div>
+        <div id="right-guide" class="guide">右<br>🐱</div>
+
         <div id="menuScreen">
             <div style="text-align:center;">
-                <h1 id="menuTitle" style="color:#4caf50; margin:0; font-size: 24px;">COLOR FINDER</h1>
-                <p id="menuMsg" style="margin:2px 0; font-size:14px; color: #ccc;">1つだけ違う色をタップ！</p>
-                <div class="best-info">BEST SCORE: LV <span id="best-ui">1</span></div>
+                <h1 id="menuTitle" style="color:#333; margin:0; font-size: 24px;">ANIMAL SORT</h1>
+                <p id="menuMsg" style="margin:2px 0; font-size:14px; color: #666;">🐶は左！🐱は右！フリックして！</p>
+                <div class="best-info">BEST SCORE: <span id="best-ui">0</span></div>
             </div>
 
             <div id="ad-middle-container">
@@ -79,7 +84,7 @@
 
             <div class="btn-group" id="btnGroup">
                 <button id="goButton" class="menu-btn">GAME START</button>
-                <a href="https://saaaachi.github.io/Color.Match/" class="menu-btn link-btn">他のゲームはこちら</a>
+                <a href="https://saaaachi.github.io/Color-Shuffle/" class="menu-btn link-btn">他のゲームはこちら</a>
             </div>
         </div>
     </div>
@@ -87,73 +92,98 @@
     <div id="ad-bottom"><iframe src="ad.html" id="frame-bottom"></iframe></div>
 
     <script>
-        const grid = document.getElementById("grid"),
-              lvDisp = document.getElementById("lv"),
+        const targetCard = document.getElementById("target-card"),
+              scoreUi = document.getElementById("score-ui"),
               menuScreen = document.getElementById("menuScreen"),
               menuTitle = document.getElementById("menuTitle"),
               menuMsg = document.getElementById("menuMsg"),
               bestUi = document.getElementById("best-ui"),
               goButton = document.getElementById("goButton"),
               adMid = document.getElementById("ad-middle-container"),
-              btnGroup = document.getElementById("btnGroup");
+              btnGroup = document.getElementById("btnGroup"),
+              gameArea = document.getElementById("game-area");
 
-        let level = 1;
-        let bestLevel = localStorage.getItem("color_finder_best") || 1;
+        let score = 0, bestScore = localStorage.getItem("animal_sort_best") || 0;
+        let currentType = "", gameActive = false, timeLeft = 10, timer, startX = 0;
 
-        window.onload = () => { bestUi.innerText = bestLevel; adMid.style.display = "none"; };
+        window.onload = () => { bestUi.innerText = bestScore; adMid.style.display = "none"; };
 
         goButton.onclick = () => {
             menuScreen.style.display = "none";
             adMid.style.display = "none";
-            level = 1;
-            initLevel();
+            gameActive = true;
+            score = 0;
+            timeLeft = 10;
+            nextAnimal();
+            startTimer();
         };
 
-        function initLevel() {
-            lvDisp.innerText = level;
-            grid.innerHTML = "";
-            
-            const side = Math.min(7, 2 + Math.floor(level / 4));
-            grid.style.gridTemplateColumns = `repeat(${side}, 1fr)`;
-            
-            const h = Math.floor(Math.random() * 360);
-            const s = 40 + Math.floor(Math.random() * 40);
-            const l = 40 + Math.floor(Math.random() * 20);
-            
-            const diff = Math.max(1.8, 15 - (level * 0.4));
-            const targetIdx = Math.floor(Math.random() * (side * side));
+        function nextAnimal() {
+            currentType = Math.random() > 0.5 ? "dog" : "cat";
+            targetCard.innerText = currentType === "dog" ? "🐶" : "🐱";
+            targetCard.style.transition = "none";
+            targetCard.style.transform = "translateX(0) scale(1) rotate(0deg)";
+            targetCard.style.opacity = "1";
+            setTimeout(() => { targetCard.style.transition = "transform 0.15s ease-out, opacity 0.15s"; }, 10);
+        }
 
-            for(let i = 0; i < side * side; i++) {
-                const tile = document.createElement("div");
-                tile.className = "tile";
+        // ゲームエリア内のみでタッチイベントを処理（広告エリアへの侵入を防ぐ）
+        gameArea.addEventListener("touchstart", (e) => {
+            if(!gameActive) return;
+            startX = e.touches[0].clientX;
+        }, {passive: true});
+
+        gameArea.addEventListener("touchend", (e) => {
+            if(!gameActive) return;
+            let endX = e.changedTouches[0].clientX;
+            let diffX = endX - startX;
+
+            if (Math.abs(diffX) > 40) {
+                const choice = diffX < 0 ? "dog" : "cat";
+                targetCard.style.transform = `translateX(${diffX > 0 ? 200 : -200}px) rotate(${diffX > 0 ? 20 : -20}deg) scale(0.5)`;
+                targetCard.style.opacity = "0";
                 
-                if(i === targetIdx) {
-                    tile.style.backgroundColor = `hsl(${h}, ${s}%, ${l + diff}%)`;
-                    tile.onpointerdown = (e) => {
-                        e.preventDefault();
-                        level++;
-                        if(level > bestLevel) {
-                            bestLevel = level;
-                            localStorage.setItem("color_finder_best", bestLevel);
-                            bestUi.innerText = bestLevel;
-                        }
-                        initLevel();
-                    };
-                } else {
-                    tile.style.backgroundColor = `hsl(${h}, ${s}%, ${l}%)`;
-                    tile.onpointerdown = (e) => {
-                        e.preventDefault();
-                        gameOver();
-                    };
-                }
-                grid.appendChild(tile);
+                setTimeout(() => {
+                    checkAnswer(choice);
+                }, 100);
+            }
+        });
+
+        function checkAnswer(choice) {
+            if(!gameActive) return;
+            if(choice === currentType) {
+                score++;
+                timeLeft += 0.4;
+                nextAnimal();
+            } else {
+                timeLeft -= 1.5;
+                nextAnimal();
+                gameArea.style.background = "#ffcfcf";
+                setTimeout(() => gameArea.style.background = "#f0f0f0", 100);
             }
         }
 
+        function startTimer() {
+            if(timer) clearInterval(timer);
+            timer = setInterval(() => {
+                if(!gameActive) return;
+                timeLeft -= 0.1;
+                scoreUi.innerText = `TIME: ${Math.max(0, timeLeft).toFixed(1)} | SCORE: ${score}`;
+                if(timeLeft <= 0) gameOver();
+            }, 100);
+        }
+
         function gameOver() {
-            menuTitle.innerText = "GAME OVER";
+            gameActive = false;
+            clearInterval(timer);
+            if(score > bestScore) {
+                bestScore = score;
+                localStorage.setItem("animal_sort_best", bestScore);
+                bestUi.innerText = bestScore;
+            }
+            menuTitle.innerText = "TIME UP!";
             menuTitle.style.color = "#f44336";
-            menuMsg.innerText = "到達レベル: " + level;
+            menuMsg.innerText = "SCORE: " + score;
             goButton.innerText = "RETRY";
 
             btnGroup.style.opacity = "0";
