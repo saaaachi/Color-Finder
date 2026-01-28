@@ -3,70 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Color Finder Puzzle v2.1</title>
+    <title>Color Finder Puzzle v2.2</title>
     <style>
-        /* 画面全体をFlexboxで管理して、上下の広告枠を「先に」確保します */
-        body { 
-            margin: 0; height: 100vh; display: flex; flex-direction: column; 
-            background: #222; font-family: sans-serif; color: white; overflow: hidden; touch-action: none; 
+        * { box-sizing: border-box; }
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: #222; font-family: sans-serif; color: white; 
+            overflow: hidden; position: fixed; /* 画面のバウンス（揺れ）を防止 */
         }
         
-        /* 広告エリア：ここが縮まないように flex-shrink: 0 を指定 */
+        /* 広告枠を絶対配置で固定 */
         #ad-top, #ad-bottom { 
-            width: 100%; height: 150px; background: #333; 
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0; z-index: 100;
+            position: absolute; left: 0; width: 100%; height: 150px; 
+            background: #333; z-index: 1000; display: flex; align-items: center; justify-content: center;
         }
+        #ad-top { top: 0; border-bottom: 1px solid #444; }
+        #ad-bottom { bottom: 0; border-top: 1px solid #444; }
         iframe { border: none; width: 100%; height: 100%; }
 
-        /* ゲームエリア：flex-grow: 1 で「残りの真ん中のスペース」を自動計算します */
-        #game-area { 
-            flex-grow: 1; position: relative; width: 100%; background: #222;
+        /* ゲーム本体：広告の高さ分(150pxずつ)の余白を強制的に作る */
+        #main-container {
+            position: absolute;
+            top: 150px; bottom: 150px; left: 0; right: 0;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            overflow: hidden; /* はみ出し厳禁 */
+            padding: 10px; z-index: 10;
         }
         
-        #ui { margin-bottom: 10px; font-size: 20px; font-weight: bold; text-shadow: 2px 2px 4px #000; }
+        #ui { margin-bottom: 5px; font-size: 18px; font-weight: bold; text-shadow: 2px 2px 4px #000; }
         
-        /* グリッド：最大サイズを少し抑えて（90vhではなく高さ基準に）調整 */
+        /* グリッド：画面の高さに合わせて自動縮小するように設定 */
         #grid { 
-            display: grid; 
-            gap: 6px; 
-            width: 85vw; /* 横幅は85% */
-            max-width: 320px; /* PCなどでも大きくなりすぎない */
-            aspect-ratio: 1/1; /* 常に正方形 */
+            display: grid; gap: 4px; 
+            width: 100%; max-width: 300px; /* 横幅制限 */
+            max-height: 100%; /* 高さを超えない */
+            aspect-ratio: 1/1; 
+            margin: auto;
         }
-        .tile { border-radius: 8px; cursor: pointer; transition: transform 0.05s; -webkit-tap-highlight-color: transparent; }
-        .tile:active { transform: scale(0.92); }
+        .tile { border-radius: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 
-        /* メニュー画面 */
+        /* メニュー画面：広告の内側に収める */
         #menuScreen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.95); display: flex; flex-direction: column; 
-            align-items: center; justify-content: space-between; z-index: 200; padding: 20px 0; box-sizing: border-box;
+            align-items: center; justify-content: space-around; /* 均等配置に変更 */
+            z-index: 200; padding: 10px 0;
         }
 
         #ad-middle-container { 
-            width: 300px; height: 250px; background: #444; display: none; justify-content: center; align-items: center; border: 1px solid #555;
+            width: 300px; height: 250px; background: #444; display: none; justify-content: center; align-items: center; border: 1px solid #555; flex-shrink: 1;
         }
         
-        .btn-group { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-bottom: 10px; }
-        .menu-btn { padding: 12px 30px; font-size: 17px; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; width: 220px; text-align: center; }
+        .btn-group { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+        .menu-btn { padding: 10px 20px; font-size: 16px; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; width: 200px; text-align: center; }
         #goButton { background: #4caf50; box-shadow: 0 4px #2e7d32; }
         .link-btn { background: #ff4081; box-shadow: 0 4px #c2185b; }
-        .best-info { color: #4caf50; font-size: 18px; font-weight: bold; }
+        .best-info { color: #4caf50; font-size: 16px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div id="ad-top"><iframe src="ad.html" id="frame-top"></iframe></div>
 
-    <div id="game-area">
+    <div id="main-container">
         <div id="ui">LEVEL: <span id="lv">1</span></div>
         <div id="grid"></div>
         
         <div id="menuScreen">
             <div style="text-align:center;">
-                <h1 id="menuTitle" style="color:#4caf50; margin:0; font-size: 26px;">COLOR FINDER</h1>
-                <p id="menuMsg" style="margin:5px 0; color: #ccc;">1つだけ違う色をタップ！</p>
+                <h2 id="menuTitle" style="color:#4caf50; margin:0; font-size: 22px;">COLOR FINDER</h2>
                 <div class="best-info">BEST: LV <span id="best-ui">1</span></div>
             </div>
 
@@ -88,7 +91,6 @@
               lvDisp = document.getElementById("lv"),
               menuScreen = document.getElementById("menuScreen"),
               menuTitle = document.getElementById("menuTitle"),
-              menuMsg = document.getElementById("menuMsg"),
               bestUi = document.getElementById("best-ui"),
               goButton = document.getElementById("goButton"),
               adMid = document.getElementById("ad-middle-container"),
@@ -132,7 +134,6 @@
         function gameOver() {
             menuTitle.innerText = "GAME OVER";
             menuTitle.style.color = "#f44336";
-            menuMsg.innerText = "到達レベル: " + level;
             goButton.innerText = "RETRY";
             btnGroup.style.opacity = "0";
             btnGroup.style.pointerEvents = "none";
