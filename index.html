@@ -5,78 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Color Finder Puzzle</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #222; font-family: sans-serif; color: white; touch-action: none; }
+        body { 
+            margin: 0; height: 100vh; display: flex; flex-direction: column; 
+            background: #222; font-family: sans-serif; color: white; overflow: hidden; touch-action: none; 
+        }
         
-        /* 広告エリア：高さを150pxに設定（中サイズ対応） */
+        /* 上下の広告エリア：150px（中サイズ対応） */
         #ad-top, #ad-bottom { 
-            position: fixed; left: 0; width: 100%; height: 150px; 
-            background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; 
+            width: 100%; height: 150px; background: #333; 
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0; z-index: 100;
         }
-        #ad-top { top: 0; }
-        #ad-bottom { bottom: 0; }
-        
-        iframe { border: none; width: 100%; height: 150px; }
-        
-        /* ゲームエリア：上下150pxを避けて中央配置 */
-        #game-area { 
-            margin-top: 150px; 
-            height: calc(100vh - 300px); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 10px; box-sizing: border-box; position: relative;
-        }
+        iframe { border: none; width: 100%; height: 100%; }
 
-        #ui { margin-bottom: 15px; font-size: 22px; font-weight: bold; text-shadow: 2px 2px 4px #000; }
+        /* ゲームエリア */
+        #game-area { 
+            flex-grow: 1; position: relative; width: 100%; background: #222; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        
+        #ui { margin-bottom: 10px; font-size: 20px; font-weight: bold; text-shadow: 2px 2px 4px #000; }
         
         /* タイルが並ぶパネル */
         #grid { 
             display: grid; 
             gap: 6px; 
-            width: 100%; 
+            width: 90vw; 
             max-width: 340px; 
             aspect-ratio: 1/1; 
         }
-        .tile { border-radius: 8px; cursor: pointer; transition: transform 0.05s; }
+        .tile { border-radius: 8px; cursor: pointer; transition: transform 0.05s; -webkit-tap-highlight-color: transparent; }
         .tile:active { transform: scale(0.92); }
 
-        #startScreen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50;
+        /* メニュー画面：鉄壁レイアウト */
+        #menuScreen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); display: flex; flex-direction: column; 
+            align-items: center; justify-content: space-between; z-index: 200; padding: 10px 0; box-sizing: border-box;
         }
-        #goButton { padding: 15px 45px; font-size: 24px; background: #4caf50; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px #2e7d32; }
-        .best-info { margin-top: 15px; color: #4caf50; font-weight: bold; font-size: 18px; }
+
+        #ad-middle-container { 
+            width: 300px; height: 250px; background: #444;
+            display: none; justify-content: center; align-items: center; 
+            overflow: hidden; flex-shrink: 0; border: 1px solid #555;
+        }
+        
+        .btn-group { 
+            display: flex; flex-direction: column; align-items: center; gap: 8px; 
+            width: 100%; padding-bottom: 5px;
+        }
+        .menu-btn { padding: 12px 30px; font-size: 17px; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; width: 220px; text-align: center; }
+        #goButton { background: #4caf50; box-shadow: 0 4px #2e7d32; }
+        .link-btn { background: #ff4081; box-shadow: 0 4px #c2185b; }
+        .best-info { color: #4caf50; font-size: 18px; font-weight: bold; margin: 2px 0; }
     </style>
 </head>
 <body>
-
-    <div id="ad-top"><iframe id="frame-top" src="ad.html"></iframe></div>
-    <div id="ad-bottom"><iframe id="frame-bottom" src="ad.html"></iframe></div>
+    <div id="ad-top"><iframe src="ad.html" id="frame-top"></iframe></div>
 
     <div id="game-area">
-        <div id="ui">LEVEL: <span id="lv">1</span> | BEST: <span id="best">1</span></div>
+        <div id="ui">LEVEL: <span id="lv">1</span></div>
         <div id="grid"></div>
         
-        <div id="startScreen">
-            <h1 style="color:#4caf50; margin-bottom: 10px;">COLOR FINDER</h1>
-            <p style="margin-bottom: 25px;">1つだけ違う色のタイルをタップ！</p>
-            <button id="goButton">GAME START</button>
-            <div class="best-info">BEST SCORE: LV <span id="best2">1</span></div>
+        <div id="menuScreen">
+            <div style="text-align:center;">
+                <h1 id="menuTitle" style="color:#4caf50; margin:0; font-size: 24px;">COLOR FINDER</h1>
+                <p id="menuMsg" style="margin:2px 0; font-size:14px; color: #ccc;">1つだけ違う色をタップ！</p>
+                <div class="best-info">BEST SCORE: LV <span id="best-ui">1</span></div>
+            </div>
+
+            <div id="ad-middle-container">
+                <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
+            </div>
+
+            <div class="btn-group" id="btnGroup">
+                <button id="goButton" class="menu-btn">GAME START</button>
+                <a href="https://saaaachi.github.io/Color.Match/" class="menu-btn link-btn">他のゲームはこちら</a>
+            </div>
         </div>
     </div>
 
+    <div id="ad-bottom"><iframe src="ad.html" id="frame-bottom"></iframe></div>
+
     <script>
-        const grid = document.getElementById("grid");
-        const lvDisp = document.getElementById("lv");
-        const bestDisp = document.getElementById("best");
-        const bestDisp2 = document.getElementById("best2");
-        const startScreen = document.getElementById("startScreen");
+        const grid = document.getElementById("grid"),
+              lvDisp = document.getElementById("lv"),
+              menuScreen = document.getElementById("menuScreen"),
+              menuTitle = document.getElementById("menuTitle"),
+              menuMsg = document.getElementById("menuMsg"),
+              bestUi = document.getElementById("best-ui"),
+              goButton = document.getElementById("goButton"),
+              adMid = document.getElementById("ad-middle-container"),
+              btnGroup = document.getElementById("btnGroup");
 
         let level = 1;
         let bestLevel = localStorage.getItem("color_finder_best") || 1;
-        bestDisp.innerText = bestLevel;
-        bestDisp2.innerText = bestLevel;
 
-        document.getElementById("goButton").onclick = () => {
-            startScreen.style.display = "none";
+        window.onload = () => { bestUi.innerText = bestLevel; adMid.style.display = "none"; };
+
+        goButton.onclick = () => {
+            menuScreen.style.display = "none";
+            adMid.style.display = "none";
             level = 1;
             initLevel();
         };
@@ -85,17 +113,13 @@
             lvDisp.innerText = level;
             grid.innerHTML = "";
             
-            // レベルに応じてマスの数を増やす (2x2 から最大 7x7)
             const side = Math.min(7, 2 + Math.floor(level / 4));
             grid.style.gridTemplateColumns = `repeat(${side}, 1fr)`;
             
-            // 基本の色をランダムに作成（HSLで制御して色の差を出しやすくする）
             const h = Math.floor(Math.random() * 360);
             const s = 40 + Math.floor(Math.random() * 40);
             const l = 40 + Math.floor(Math.random() * 20);
             
-            // 正解タイルの輝度差（レベルが上がるほど極小の差になる）
-            // 最初は大きく(15%)、後半はシビア(2%程度)に
             const diff = Math.max(1.8, 15 - (level * 0.4));
             const targetIdx = Math.floor(Math.random() * (side * side));
 
@@ -104,7 +128,6 @@
                 tile.className = "tile";
                 
                 if(i === targetIdx) {
-                    // 正解タイル：輝度を diff 分だけ変える
                     tile.style.backgroundColor = `hsl(${h}, ${s}%, ${l + diff}%)`;
                     tile.onpointerdown = (e) => {
                         e.preventDefault();
@@ -112,12 +135,11 @@
                         if(level > bestLevel) {
                             bestLevel = level;
                             localStorage.setItem("color_finder_best", bestLevel);
-                            bestDisp.innerText = bestLevel;
+                            bestUi.innerText = bestLevel;
                         }
                         initLevel();
                     };
                 } else {
-                    // 通常タイル
                     tile.style.backgroundColor = `hsl(${h}, ${s}%, ${l}%)`;
                     tile.onpointerdown = (e) => {
                         e.preventDefault();
@@ -129,20 +151,27 @@
         }
 
         function gameOver() {
-            alert("GAME OVER!\nあなたの到達レベル: " + level);
-            location.reload();
+            menuTitle.innerText = "GAME OVER";
+            menuTitle.style.color = "#f44336";
+            menuMsg.innerText = "到達レベル: " + level;
+            goButton.innerText = "RETRY";
+
+            btnGroup.style.opacity = "0";
+            btnGroup.style.pointerEvents = "none";
+            adMid.style.display = "flex"; 
+            menuScreen.style.display = "flex";
+
+            setTimeout(() => {
+                btnGroup.style.opacity = "1";
+                btnGroup.style.pointerEvents = "auto";
+            }, 600);
         }
 
-        // 🚀 30秒ごとに広告を転生（ad.html 読み直し）
         setInterval(() => {
-            ["frame-top", "frame-bottom"].forEach(id => {
-                const f = document.getElementById(id);
-                if(f) {
-                    const s = f.src; f.src = "about:blank";
-                    setTimeout(() => f.src = s, 100);
-                }
+            document.querySelectorAll('iframe').forEach(f => {
+                const s = f.src; f.src = "about:blank"; setTimeout(() => f.src = s, 100);
             });
-        }, 29000);
+        }, 30000);
     </script>
 </body>
 </html>
