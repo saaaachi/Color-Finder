@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Color Finder Puzzle v2.6</title>
+    <title>Color Finder Puzzle v26.1</title>
     <style>
         * { box-sizing: border-box; }
         html, body { 
@@ -47,7 +47,7 @@
             align-items: center; justify-content: center; z-index: 200; padding: 20px 0;
         }
 
-        /* 320x100の中サイズ広告コンテナ（ガード設定追加） */
+        /* 中サイズ広告コンテナ（i-mobile & ガード設定） */
         #ad-middle-container { 
             width: 320px; height: 100px; background: #333;
             display: none; justify-content: center; align-items: center; 
@@ -67,12 +67,13 @@
             font-weight: bold; cursor: pointer; background: rgba(0,0,0,0.5); 
             width: 40px; height: 40px; border-radius: 50%; display: none;
             align-items: center; justify-content: center; z-index: 2100;
+            border: 2px solid white;
         }
         
         .btn-group { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
         .menu-btn { padding: 14px 20px; font-size: 18px; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; width: 240px; text-align: center; transition: 0.3s; }
         #goButton { background: #4caf50; box-shadow: 0 4px #2e7d32; }
-        #goButton:disabled { background: #666; box-shadow: 0 4px #444; cursor: default; }
+        #goButton:disabled { background: #666; box-shadow: 0 4px #444; cursor: default; color: #ccc; }
         .link-btn { background: #ff4081; box-shadow: 0 4px #c2185b; }
         .best-info { color: #4caf50; font-size: 18px; font-weight: bold; }
     </style>
@@ -91,9 +92,9 @@
             </div>
 
             <div id="ad-middle-container">
-                <div id="im-8b988d7b042a42d5b8df6921b628cf00">
+                <div id="im-8b492cea6667490da71c488bdcc7cfc8">
                     <script async src="https://imp-adedge.i-mobile.co.jp/script/v1/spot.js?20220104"></script>
-                    <script>(window.adsbyimobile=window.adsbyimobile||[]).push({pid:84561,mid:590804,asid:1924211,type:"banner",display:"inline",elementid:"im-8b988d7b042a42d5b8df6921b628cf00"})</script>
+                    <script>(window.adsbyimobile=window.adsbyimobile||[]).push({pid:84561,mid:590804,asid:1924211,type:"banner",display:"inline",elementid:"im-8b492cea6667490da71c488bdcc7cfc8"})</script>
                 </div>
             </div>
 
@@ -174,24 +175,25 @@
             menuTitle.innerText = "GAME OVER";
             menuTitle.style.color = "#f44336";
             
-            // --- ✨ 誤タップ防止ガード発動 ---
+            // --- ✨ 誤タップ防止ガード発動 (1.5秒) ---
             goButton.innerText = "お待ちください...";
             goButton.disabled = true;
             
             adMid.style.display = "flex"; 
-            adMid.style.pointerEvents = "none"; // クリック無効化
-            adMid.style.opacity = "0.4";        // 少し薄くする
+            adMid.style.pointerEvents = "none"; // 広告タップ不可
+            adMid.style.opacity = "0.4";       // 少し薄くする
             
             menuScreen.style.display = "flex";
 
-            // 1.2秒後にガード解除
+            // 1.5秒後にガード解除とボタン有効化を同期
             setTimeout(() => {
                 adMid.style.pointerEvents = "auto";
                 adMid.style.opacity = "1";
                 goButton.disabled = false;
                 goButton.innerText = "RETRY";
-            }, 1200);
+            }, 1500);
 
+            // 大画面広告判定
             if (playCount === 3 || (playCount > 3 && (playCount - 3) % 7 === 0)) {
                 setTimeout(showBigAd, 400);
             }
@@ -210,11 +212,9 @@
         function closeAd() {
             document.getElementById("bigAdScreen").style.display = "none";
             document.getElementById("ad-large-frame").src = "";
-            goButton.disabled = false;
-            goButton.innerText = "RETRY";
         }
 
-        // --- 広告リフレッシュ (交互に30秒) ---
+        // --- 広告リフレッシュ (30秒交互) ---
         setInterval(() => {
             const f = document.getElementById('frame-top');
             if(f) f.src = "./ad.html?pos=top&t=" + Date.now();
